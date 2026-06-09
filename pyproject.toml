@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "livetree"
+version = "0.1.0"
+description = "Live terminal directory tree"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pathspec>=0.12",
+    "rich>=13",
+    "typer>=0.12",
+    "watchdog>=4",
+]
+
+[project.scripts]
+lt = "livetree.cli:app"
+
+[project.urls]
+Homepage = "https://auroranode.com"
+AuroraVault = "https://auroranode.com/vault"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
