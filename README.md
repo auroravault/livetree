@@ -32,6 +32,9 @@ lt .
 lt .
 lt . --depth 3
 lt . --changed
+lt . --pattern "*.py"
+lt . -p "*.py"
+lt . --pattern tests
 lt . --git
 lt dist --fade 30
 lt --symbols ascii
@@ -118,12 +121,45 @@ C   copied
 !!  ignored
 ```
 
+## Dev Environment
+
+Developed and tested on:
+
+| | |
+|---|---|
+| OS | Debian GNU/Linux 13 (trixie) — kernel 6.12 |
+| Python | 3.13.5 |
+| rich | 15.0.0 |
+| watchdog | 6.0.0 |
+| typer | 0.26.7 |
+| pathspec | 1.1.1 |
+
+To set up the dev environment and make `lt` available globally on this machine:
+
+```bash
+./scripts/startlt.sh
+```
+
+This creates `.venv`, installs the package in editable mode, and symlinks `lt` into
+`~/.local/bin`. The symlink persists across reboots — re-run only after a fresh
+clone or if `.venv` is deleted.
+
+To run the test suite:
+
+```bash
+source .venv/bin/activate
+pytest
+```
+
 ## Planned Options
 
 ```bash
 lt .
 lt . --depth 3
 lt . --changed
+lt . --pattern "*.py"
+lt . -p "*.py"
+lt . --pattern tests
 lt . --git
 lt dist --fade 30
 lt --help
@@ -131,7 +167,7 @@ lt -i
 lt -i .
 lt -i /path/to/folder
 lt /path/to/folder --depth 3 --changed
-lt /path/to/folder "*.py" --depth 3 --changed
+lt /path/to/folder -p "*.py" --depth 3 --changed
 lt --no-color
 lt --symbols ascii
 lt --symbols unicode
