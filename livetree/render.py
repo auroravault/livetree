@@ -45,34 +45,62 @@ def render_tree(
 
 
 def _ordered_nodes(root: Path, candidates: list[TreeNode], *, changed_only: bool, pattern: str | None = None) -> list[TreeNode]:
-    nodes = [node for node in candidates if not changed_only or node.change != ChangeKind.UNCHANGED]
+    # Pattern filtering: build matching set and ancestor closure from ALL candidates
+    # so that changed_only cannot strip required parent directories.
     if pattern:
-        matching = {node.path for node in nodes if not node.is_dir and (node.path.match(pattern) or node.path.name == pattern)}
-        nodes = [
-            node for node in nodes
-            if (not node.is_dir and node.path in matching)
-            or (node.is_dir and (node.path == root or any(p for p in matching if node.path in p.parents)))
+        matching_paths = {
+            node.path for node in candidates
+            if not node.is_dir and node.path.match(pattern)
+        }
+        if not matching_paths:
+            return []
+        ancestor_dirs = {anc for p in matching_paths for anc in p.parents}
+        candidates = [
+            node for node in candidates
+            if (not node.is_dir and node.path in matching_paths)
+            or (node.is_dir and (node.path == root or node.path in ancestor_dirs))
         ]
-    node_by_path = {node.path: node for node in nodes}
-    if root in node_by_path:
-        ordered = [node_by_path[root]]
-    else:
-        ordered = []
+
+    # changed_only: keep changed files/dirs, but preserve ancestor directories
+    # for any changed descendant so the tree stays connected.
+    if changed_only:
+        changed_paths = {
+            node.path for node in candidates
+            if node.change != ChangeKind.UNCHANGED
+        }
+        required_ancestors = {anc for p in changed_paths for anc in p.parents}
+        candidates = [
+            node for node in candidates
+            if node.change != ChangeKind.UNCHANGED or node.path in required_ancestors
+        ]
+
+    nodes = candidates
+
+    # Pre-group children by parent for O(1) lookup in walk().
+    by_parent: dict[Path, list[TreeNode]] = {}
+    for node in nodes:
+        if node.path != root:
+            by_parent.setdefault(node.path.parent, []).append(node)
+
+    root_node = next((node for node in nodes if node.path == root), None)
+    ordered: list[TreeNode] = []
+    ordered_ids: set[int] = set()
+
+    if root_node is not None:
+        ordered.append(root_node)
+        ordered_ids.add(id(root_node))
 
     def walk(parent: Path) -> None:
-        children = [
-            node
-            for node in nodes
-            if node.path != parent and node.path.parent == parent
-        ]
-        children.sort(key=lambda node: (not node.is_dir, node.path.name.lower()))
+        children = by_parent.get(parent, [])
+        children = sorted(children, key=lambda node: (not node.is_dir, node.path.name.lower()))
         for child in children:
             ordered.append(child)
+            ordered_ids.add(id(child))
             if child.is_dir:
                 walk(child.path)
 
     walk(root)
-    remaining = [node for node in nodes if node not in ordered]
+    remaining = [node for node in nodes if id(node) not in ordered_ids]
     remaining.sort(key=lambda node: node.path.as_posix().lower())
     ordered.extend(remaining)
     return ordered

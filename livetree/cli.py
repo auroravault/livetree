@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import fnmatch
-import re
 from pathlib import Path
 from typing import Optional
 
@@ -31,7 +29,7 @@ app = typer.Typer(help=HELP, no_args_is_help=False)
 def main(
     ctx: typer.Context,
     path: Path = typer.Argument(Path("."), help="Directory to render."),
-    pattern: Optional[str] = typer.Argument(None, help="Optional glob pattern to focus, for example '*.py'."),
+    pattern: Optional[str] = typer.Option(None, "--pattern", "-p", help="Glob pattern to focus, e.g. '*.py'."),
     depth: Optional[int] = typer.Option(None, "--depth", "-d", min=0, help="Maximum tree depth."),
     changed: bool = typer.Option(False, "--changed", help="Show only changed paths."),
     git: bool = typer.Option(False, "--git", help="Use git-like status symbols (shorthand for --symbols git; does not query git status)."),
@@ -60,11 +58,6 @@ def main(
         symbols = "git"
     if symbols not in {"unicode", "ascii", "git"}:
         raise typer.BadParameter("symbols must be one of: unicode, ascii, git")
-    if pattern:
-        try:
-            re.compile(fnmatch.translate(pattern))
-        except re.error:
-            raise typer.BadParameter(f"Invalid glob pattern: {pattern!r}")
     ignore = load_ignore(root)
     state = TreeState.from_scan(root, ignore, depth=depth, fade_seconds=fade)
     render_kwargs = {
@@ -91,7 +84,5 @@ def main(
         console.print("\nStopped.", style="dim")
 
 
-
 if __name__ == "__main__":
     app()
-
