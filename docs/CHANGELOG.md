@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project uses Semantic Versioning.
 
+## [0.1.4] - 2026-06-10
+
+### Added
+
+- Startup splash: `◌  livetree  ·  by auroranode  ·  v0.1.4` printed above the
+  tree on every run. Uses the UNCHANGED symbol from the active symbol mode,
+  `magenta` for the tool name, `dim` for everything else. Respects `--no-color`
+  and `--symbols ascii`/`git`.
+- Keymap footer rendered below the live tree:
+  `  ctrl+r  clear  ·  ctrl+c  exit` — dim, non-intrusive.
+  Only shown in live mode (not with `--once`).
+
 ## [0.1.3] - 2026-06-10
 
 ### Added

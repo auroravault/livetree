@@ -7,9 +7,13 @@ import typer
 from rich.console import Console
 from rich.live import Live
 
+from rich.console import Group
+from rich.text import Text
+
+from . import __version__
 from .ignore import init_ltignore, load_ignore
 from .input import CTRL_R, KeyboardListener
-from .render import render_tree
+from .render import render_keymap, render_splash, render_tree
 from .state import TreeState
 from .watch import LiveWatcher, apply_events, drain_events
 
@@ -70,13 +74,23 @@ def main(
         "no_meta": no_meta,
         "max_name_width": max_name_width,
     }
+    console.print(render_splash(symbols=symbols, version=__version__))
+    console.print()
     if once:
         state.prune_faded()
         console.print(render_tree(state, **render_kwargs))
         return
+
+    def _live_render() -> Group:
+        return Group(
+            render_tree(state, **render_kwargs),
+            Text(""),
+            render_keymap(),
+        )
+
     try:
         state.prune_faded()
-        with Live(render_tree(state, **render_kwargs), console=console, refresh_per_second=8, screen=False) as live:
+        with Live(_live_render(), console=console, refresh_per_second=8, screen=False) as live:
             with LiveWatcher(root) as watcher:
                 with KeyboardListener() as kb:
                     while True:
@@ -99,7 +113,7 @@ def main(
                             #     pass
 
                         state.prune_faded()
-                        live.update(render_tree(state, **render_kwargs))
+                        live.update(_live_render())
     except KeyboardInterrupt:
         console.print("\nStopped.", style="dim")
 

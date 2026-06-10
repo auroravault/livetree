@@ -12,6 +12,29 @@ from .symbols import ChangeKind, get_symbol
 _CHILD_SORT_KEY = lambda node: (not node.is_dir, node.path.name.lower())  # noqa: E731
 
 
+def render_splash(*, symbols: str = "unicode", version: str) -> Text:
+    sym = get_symbol(symbols, ChangeKind.UNCHANGED)
+    sep = "·" if symbols != "ascii" else "."
+    t = Text()
+    if sym.text.strip():
+        t.append(sym.text, style=sym.style)
+        t.append("  ")
+    t.append("livetree", style="magenta")
+    t.append(f"  {sep}  by auroranode  {sep}  ", style="dim")
+    t.append(f"v{version}", style="dim")
+    return t
+
+
+def render_keymap() -> Text:
+    t = Text(style="dim")
+    t.append("  ctrl+r")
+    t.append("  clear  ", style="dim")
+    t.append("·", style="dim")
+    t.append("  ctrl+c")
+    t.append("  exit", style="dim")
+    return t
+
+
 def render_tree(
     state: TreeState,
     *,
