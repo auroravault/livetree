@@ -95,12 +95,12 @@ class TreeState:
         if self.ignore.ignores(dest):
             self.delete(src)
             return
-        moved: list[tuple[Path, TreeNode]] = []
+        moved: list[tuple[Path, Path, TreeNode]] = []
         for path, node in list(self.nodes.items()):
             if path == src or _is_relative_to(path, src):
                 rel = path.relative_to(src) if path != src else Path()
                 new_path = dest / rel
-                moved.append((new_path.resolve(), node))
+                moved.append((path, new_path.resolve(), node))
                 del self.nodes[path]
         if not moved:
             self.create_or_modify(dest)
@@ -112,11 +112,11 @@ class TreeState:
                 self._mark_ancestors(dest, node.changed_at)
             return
         now = self.clock()
-        for new_path, node in moved:
+        for old_path, new_path, node in moved:
             node.path = new_path
             node.change = ChangeKind.MOVED
             node.changed_at = now
-            node.previous_path = src
+            node.previous_path = old_path
             self.nodes[new_path] = node
         self._mark_ancestors(src, now)
         self._mark_ancestors(dest, now)

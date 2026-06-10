@@ -14,13 +14,14 @@ def render_tree(
     *,
     symbols: str = "unicode",
     changed_only: bool = False,
+    pattern: str | None = None,
     compact: bool = False,
     dense: bool = False,
     no_meta: bool = False,
     max_name_width: int = 72,
 ) -> Group:
     state.prune_faded()
-    nodes = _ordered_nodes(state.root, list(state.nodes.values()), changed_only=changed_only)
+    nodes = _ordered_nodes(state.root, list(state.nodes.values()), changed_only=changed_only, pattern=pattern)
     lines: list[Text] = []
     last_paths = _last_paths(state.root, nodes)
     now = state.clock()
@@ -43,8 +44,15 @@ def render_tree(
     return Group(*lines)
 
 
-def _ordered_nodes(root: Path, candidates: list[TreeNode], *, changed_only: bool) -> list[TreeNode]:
+def _ordered_nodes(root: Path, candidates: list[TreeNode], *, changed_only: bool, pattern: str | None = None) -> list[TreeNode]:
     nodes = [node for node in candidates if not changed_only or node.change != ChangeKind.UNCHANGED]
+    if pattern:
+        matching = {node.path for node in nodes if not node.is_dir and (node.path.match(pattern) or node.path.name == pattern)}
+        nodes = [
+            node for node in nodes
+            if (not node.is_dir and node.path in matching)
+            or (node.is_dir and (node.path == root or any(p for p in matching if node.path in p.parents)))
+        ]
     node_by_path = {node.path: node for node in nodes}
     if root in node_by_path:
         ordered = [node_by_path[root]]

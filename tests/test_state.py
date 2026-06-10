@@ -49,6 +49,21 @@ def test_move_updates_path_and_marks_moved(tmp_path: Path) -> None:
     assert node.previous_path == (tmp_path / "old.txt").resolve()
 
 
+def test_move_directory_sets_previous_path_to_each_child_original_path(tmp_path: Path) -> None:
+    old_dir = tmp_path / "old_dir"
+    old_dir.mkdir()
+    (old_dir / "file.py").write_text("x", encoding="utf-8")
+    state = TreeState.from_scan(tmp_path, load_ignore(tmp_path))
+
+    new_dir = tmp_path / "new_dir"
+    old_dir.rename(new_dir)
+    state.move(old_dir, new_dir)
+
+    moved_file = state.nodes[(new_dir / "file.py").resolve()]
+    assert moved_file.change == ChangeKind.MOVED
+    assert moved_file.previous_path == (old_dir / "file.py").resolve()
+
+
 def test_refresh_detects_external_changes(tmp_path: Path) -> None:
     state = TreeState.from_scan(tmp_path, load_ignore(tmp_path))
 

@@ -162,5 +162,3 @@ It is part of the broader [AuroraNode](https://auroranode.com) secosystem.
 ## License
 
 Use the repository license.
-# livetree
-# livetree

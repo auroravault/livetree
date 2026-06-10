@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import fnmatch
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -32,7 +34,7 @@ def main(
     pattern: Optional[str] = typer.Argument(None, help="Optional glob pattern to focus, for example '*.py'."),
     depth: Optional[int] = typer.Option(None, "--depth", "-d", min=0, help="Maximum tree depth."),
     changed: bool = typer.Option(False, "--changed", help="Show only changed paths."),
-    git: bool = typer.Option(False, "--git", help="Use git-like status symbols."),
+    git: bool = typer.Option(False, "--git", help="Use git-like status symbols (shorthand for --symbols git; does not query git status)."),
     fade: float = typer.Option(8.0, "--fade", min=0.1, help="Seconds before change markers fade."),
     init_ignore: bool = typer.Option(False, "--init-ignore", "-i", help="Create a default .ltignore in PATH and exit."),
     no_color: bool = typer.Option(False, "--no-color", help="Disable terminal color."),
@@ -58,13 +60,17 @@ def main(
         symbols = "git"
     if symbols not in {"unicode", "ascii", "git"}:
         raise typer.BadParameter("symbols must be one of: unicode, ascii, git")
+    if pattern:
+        try:
+            re.compile(fnmatch.translate(pattern))
+        except re.error:
+            raise typer.BadParameter(f"Invalid glob pattern: {pattern!r}")
     ignore = load_ignore(root)
     state = TreeState.from_scan(root, ignore, depth=depth, fade_seconds=fade)
-    if pattern:
-        _apply_pattern_filter(state, pattern)
     render_kwargs = {
         "symbols": symbols,
         "changed_only": changed,
+        "pattern": pattern,
         "compact": compact,
         "dense": dense,
         "no_meta": no_meta,
@@ -80,21 +86,10 @@ def main(
                     events = drain_events(watcher.events, debounce)
                     if events:
                         apply_events(state, events)
-                        if pattern:
-                            state.refresh()
-                            _apply_pattern_filter(state, pattern)
                     live.update(render_tree(state, **render_kwargs))
     except KeyboardInterrupt:
         console.print("\nStopped.", style="dim")
 
-
-def _apply_pattern_filter(state: TreeState, pattern: str) -> None:
-    for path in list(state.nodes):
-        node = state.nodes[path]
-        if node.is_dir or path == state.root:
-            continue
-        if not path.match(pattern) and not path.name == pattern:
-            del state.nodes[path]
 
 
 if __name__ == "__main__":
