@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project uses Semantic Versioning.
 
+## [0.1.5] - 2026-06-10
+
+### Added
+
+- BSD 3-Clause License. `docs/license.md` contains the full license text
+  (copyright AuroraNode 2026). `pyproject.toml` updated with
+  `license = { text = "BSD-3-Clause" }`. README license section updated.
+
 ## [0.1.4] - 2026-06-10
 
 ### Added
