@@ -163,6 +163,32 @@ def test_fade_resets_only_local_status_and_subtree_activity(tmp_path: Path) -> N
     assert state.nodes[tmp_path.resolve()].subtree_changed_at == 0.0
 
 
+def test_clear_changes_resets_all_markers_and_removes_tombstones(tmp_path: Path) -> None:
+    (tmp_path / "modified.txt").write_text("a", encoding="utf-8")
+    (tmp_path / "deleted.txt").write_text("b", encoding="utf-8")
+    state = TreeState.from_scan(tmp_path, load_ignore(tmp_path))
+
+    (tmp_path / "new.txt").write_text("c", encoding="utf-8")
+    state.create_or_modify(tmp_path / "new.txt")
+    (tmp_path / "modified.txt").write_text("aa", encoding="utf-8")
+    state.create_or_modify(tmp_path / "modified.txt")
+    (tmp_path / "deleted.txt").unlink()
+    state.delete(tmp_path / "deleted.txt")
+
+    assert state.nodes[(tmp_path / "new.txt").resolve()].change == ChangeKind.NEW
+    assert state.nodes[(tmp_path / "modified.txt").resolve()].change == ChangeKind.MODIFIED
+    assert state.nodes[(tmp_path / "deleted.txt").resolve()].change == ChangeKind.DELETED
+
+    state.clear_changes()
+
+    assert (tmp_path / "deleted.txt").resolve() not in state.nodes
+    assert state.nodes[(tmp_path / "new.txt").resolve()].change == ChangeKind.UNCHANGED
+    assert state.nodes[(tmp_path / "modified.txt").resolve()].change == ChangeKind.UNCHANGED
+    for node in state.nodes.values():
+        assert node.changed_at is None
+        assert node.subtree_changed_at == 0.0
+
+
 def test_deleted_tombstone_removed_after_fade(tmp_path: Path) -> None:
     clock = FakeClock()
     target = tmp_path / "gone.txt"

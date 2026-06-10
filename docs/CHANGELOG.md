@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog, and this project uses Semantic Versioning.
 
+## [0.1.3] - 2026-06-10
+
+### Added
+
+- `Ctrl+R` clears all change markers immediately. Files with new/modified/moved
+  status reset to UNCHANGED; deleted tombstones are pruned. Intended as the
+  primary way to acknowledge changes rather than waiting for auto-fade.
+- `livetree/input.py`: `KeyboardListener` — daemon thread that reads single
+  keystrokes in cbreak mode alongside the watchdog event loop. No-ops silently
+  when stdin is not a TTY (piped input, `--once`, CI).
+- Structured key-action slot in the live loop (commented placeholders for future
+  `git stage`, `git commit`, `git push` bindings).
+
+### Changed
+
+- Default `--fade` increased from `8.0` s to `99.0` s. With `Ctrl+R` available
+  for explicit acknowledgement, the auto-fade timer is now a long-lived safety
+  net rather than the primary UX.
+
 ## [0.1.2] - 2026-06-10
 
 ### Fixed

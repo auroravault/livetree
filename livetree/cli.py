@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.live import Live
 
 from .ignore import init_ltignore, load_ignore
+from .input import CTRL_R, KeyboardListener
 from .render import render_tree
 from .state import TreeState
 from .watch import LiveWatcher, apply_events, drain_events
@@ -33,7 +34,7 @@ def main(
     depth: Optional[int] = typer.Option(None, "--depth", "-d", min=0, help="Maximum tree depth."),
     changed: bool = typer.Option(False, "--changed", help="Show only changed paths."),
     git: bool = typer.Option(False, "--git", help="Use git-like status symbols (shorthand for --symbols git; does not query git status)."),
-    fade: float = typer.Option(8.0, "--fade", min=0.1, help="Seconds before change markers fade."),
+    fade: float = typer.Option(99.0, "--fade", min=0.1, help="Seconds before change markers fade. Use Ctrl+R to clear immediately."),
     init_ignore: bool = typer.Option(False, "--init-ignore", "-i", help="Create a default .ltignore in PATH and exit."),
     no_color: bool = typer.Option(False, "--no-color", help="Disable terminal color."),
     symbols: str = typer.Option("unicode", "--symbols", help="Symbol mode: unicode, ascii, git."),
@@ -77,12 +78,28 @@ def main(
         state.prune_faded()
         with Live(render_tree(state, **render_kwargs), console=console, refresh_per_second=8, screen=False) as live:
             with LiveWatcher(root) as watcher:
-                while True:
-                    events = drain_events(watcher.events, debounce)
-                    if events:
-                        apply_events(state, events)
-                    state.prune_faded()
-                    live.update(render_tree(state, **render_kwargs))
+                with KeyboardListener() as kb:
+                    while True:
+                        events = drain_events(watcher.events, debounce)
+                        keys = kb.drain()
+
+                        if events:
+                            apply_events(state, events)
+
+                        # --- User actions ---
+                        for key in keys:
+                            if key == CTRL_R:
+                                state.clear_changes()
+                            # Future git actions (keys TBD):
+                            # elif key == _GIT_STAGE:
+                            #     pass
+                            # elif key == _GIT_COMMIT:
+                            #     pass
+                            # elif key == _GIT_PUSH:
+                            #     pass
+
+                        state.prune_faded()
+                        live.update(render_tree(state, **render_kwargs))
     except KeyboardInterrupt:
         console.print("\nStopped.", style="dim")
 

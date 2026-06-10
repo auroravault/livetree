@@ -62,7 +62,7 @@ lt [PATH] [OPTIONS]
 
 | Option | Default | Status | Description |
 |--------|---------|--------|-------------|
-| `--fade SECONDS` | `8.0` | ✅ | Seconds before change markers fade to UNCHANGED. Minimum 0.1. |
+| `--fade SECONDS` | `99.0` | ✅ | Seconds before change markers auto-fade. Minimum 0.1. Primary acknowledgement path is `Ctrl+R`; fade is a long-lived safety net. |
 | `--debounce SECONDS` | `0.08` | ✅ | Seconds to wait after the first event in a burst before processing. Prevents flicker from editor save sequences. |
 | `--tombstone SECONDS` | — | 💡 | Separate timeout for how long deleted paths remain visible as tombstones before being pruned. Currently inherits `--fade`. Useful for longer fade on deletions while keeping modify markers brief. |
 
@@ -77,9 +77,23 @@ lt [PATH] [OPTIONS]
 
 ---
 
+## Keybindings (live mode only)
+
+| Key | Status | Action |
+|-----|--------|--------|
+| `Ctrl+R` | ✅ | **Refresh** — clear all change markers immediately. New/modified/moved reset to UNCHANGED; deleted tombstones are pruned. |
+| `Ctrl+C` | ✅ | Exit |
+| TBD | 🚧 | Git: stage selected / all changed |
+| TBD | 🚧 | Git: commit |
+| TBD | 🚧 | Git: push |
+
+Keybindings are inactive in `--once` mode (no live loop) and when stdin is not a TTY.
+
+---
+
 ## Implemented — full summary
 
-The following is everything available today (0.1.2):
+The following is everything available today (0.1.3):
 
 ```
 lt [PATH]

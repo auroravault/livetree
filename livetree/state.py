@@ -142,6 +142,18 @@ class TreeState:
             if path not in scanned:
                 self.delete(path)
 
+    def clear_changes(self) -> None:
+        """Reset all change markers immediately. Called by user-triggered actions."""
+        for path in list(self.nodes):
+            node = self.nodes[path]
+            if node.change == ChangeKind.DELETED:
+                del self.nodes[path]
+            else:
+                node.change = ChangeKind.UNCHANGED
+                node.changed_at = None
+                node.previous_path = None
+                node.subtree_changed_at = 0.0
+
     def prune_faded(self) -> None:
         now = self.clock()
         for path in list(self.nodes):
