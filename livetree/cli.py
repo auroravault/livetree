@@ -70,15 +70,18 @@ def main(
         "max_name_width": max_name_width,
     }
     if once:
+        state.prune_faded()
         console.print(render_tree(state, **render_kwargs))
         return
     try:
+        state.prune_faded()
         with Live(render_tree(state, **render_kwargs), console=console, refresh_per_second=8, screen=False) as live:
             with LiveWatcher(root) as watcher:
                 while True:
                     events = drain_events(watcher.events, debounce)
                     if events:
                         apply_events(state, events)
+                    state.prune_faded()
                     live.update(render_tree(state, **render_kwargs))
     except KeyboardInterrupt:
         console.print("\nStopped.", style="dim")

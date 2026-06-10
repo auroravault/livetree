@@ -95,13 +95,15 @@ class TreeState:
         if self.ignore.ignores(dest):
             self.delete(src)
             return
+        # Two-pass: collect matching keys first, then mutate — avoids copying the
+        # entire nodes dict just to allow deletion during iteration.
+        matching_keys = [p for p in self.nodes if p == src or _is_relative_to(p, src)]
         moved: list[tuple[Path, Path, TreeNode]] = []
-        for path, node in list(self.nodes.items()):
-            if path == src or _is_relative_to(path, src):
-                rel = path.relative_to(src) if path != src else Path()
-                new_path = dest / rel
-                moved.append((path, new_path.resolve(), node))
-                del self.nodes[path]
+        for path in matching_keys:
+            node = self.nodes.pop(path)
+            rel = path.relative_to(src) if path != src else Path()
+            new_path = dest / rel
+            moved.append((path, new_path.resolve(), node))
         if not moved:
             self.create_or_modify(dest)
             node = self.nodes.get(dest)
@@ -159,6 +161,9 @@ class TreeState:
                 node.subtree_changed_at = 0.0
 
     def visible_nodes(self, *, changed_only: bool = False) -> list[TreeNode]:
+        # NOTE: changed_only here is a flat filter with no ancestor preservation.
+        # render_tree(changed_only=True) shows parent directories for context;
+        # this method does not — callers should not assume the two are equivalent.
         nodes = [node for node in self.nodes.values() if not changed_only or node.change != ChangeKind.UNCHANGED]
         return sorted(nodes, key=lambda node: node.path.as_posix().lower())
 

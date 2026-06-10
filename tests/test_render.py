@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from livetree.ignore import load_ignore
 from livetree.render import render_tree
@@ -6,11 +7,11 @@ from livetree.state import TreeState
 from livetree.symbols import ChangeKind
 
 
-def _lines(state: TreeState, **kwargs: object) -> list[str]:
+def _lines(state: TreeState, **kwargs: Any) -> list[str]:
     return [line.plain for line in render_tree(state, **kwargs).renderables]
 
 
-def _flat(state: TreeState, **kwargs: object) -> str:
+def _flat(state: TreeState, **kwargs: Any) -> str:
     return " ".join(_lines(state, **kwargs))
 
 
@@ -129,6 +130,34 @@ def test_render_pattern_unchanged_parent_excluded_when_no_matching_children(tmp_
     flat = _flat(state, pattern="*.py")
     assert "lib/" not in flat
     assert "helper.js" not in flat
+
+
+def test_render_pattern_directory_name_shows_subtree(tmp_path: Path) -> None:
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_core.py").write_text("", encoding="utf-8")
+    (tmp_path / "readme.txt").write_text("", encoding="utf-8")
+    state = TreeState.from_scan(tmp_path, load_ignore(tmp_path))
+
+    lines = _lines(state, pattern="tests")
+    flat = " ".join(lines)
+    assert "tests/" in flat
+    assert "test_core.py" in flat
+    assert not any("readme.txt" in line for line in lines)
+
+
+def test_render_pattern_no_match_with_changed_only_renders_empty_not_no_changed(tmp_path: Path) -> None:
+    src = tmp_path / "src"
+    src.mkdir()
+    f = src / "main.py"
+    f.write_text("a", encoding="utf-8")
+    state = TreeState.from_scan(tmp_path, load_ignore(tmp_path))
+    f.write_text("b", encoding="utf-8")
+    state.create_or_modify(f)
+
+    # pattern matches nothing → should say (empty), not (no changed files)
+    lines = _lines(state, pattern="*.rs", changed_only=True)
+    assert lines == ["(empty)"]
 
 
 # --- display modes ---
