@@ -203,4 +203,6 @@ It is part of the broader [AuroraNode](https://auroranode.com) secosystem.
 
 ## License
 
-Use the repository license.
+`livetree` is released under the BSD 3-Clause License.
+
+See [docs/license.md](docs/license.md).
