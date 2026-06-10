@@ -184,11 +184,17 @@ lt . --max-name-width 48
 
 This project uses Semantic Versioning.
 
-See [VERSIONING.md](VERSIONING.md).
+See [docs/VERSIONING.md](docs/VERSIONING.md).
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [docs/CHANGELOG.md](docs/CHANGELOG.md).
+
+## CLI Reference
+
+Full option reference, planned features, and suggested additions:
+
+See [docs/cli_contract.md](docs/cli_contract.md).
 
 ## Origin
 
